@@ -190,6 +190,14 @@ Negative signals include:
 ## Personal Tuning
 
 Personal preferences are configured in the extension Options page (`chrome://extensions` -> Job Evaluator -> `Extension options`) and saved in `chrome.storage.local`.
+The Preferences page also includes a `Return to Extension Settings` link to jump back to the extension settings tab.
+
+Current Preferences sections include:
+
+- Scoring Preferences (checkbox toggles)
+- Commute (`Home ZIP`, `Max Radius (miles)`)
+- Optional Personal Fields (`Contact Email`, `Target Salary Text`)
+- Education Match Keywords (comma/newline list)
 
 The committed defaults/schemas live in [constants.js](src/constants.js) under `DEFAULT_USER_PREFERENCES`, and runtime values are loaded through [storage.js](src/storage.js).
 
@@ -248,8 +256,9 @@ Unknown job pages fall back to a generic extractor that uses:
 
 1. Open [scorer.js](src/scorer.js).
 2. Adjust phrase rules or flag heuristics.
-3. Open [constants.js](src/constants.js) to change weights or preferences.
-4. Reload the unpacked extension in Chrome and test again.
+3. Open [constants.js](src/constants.js) to change rubric weights/default preference values.
+4. Use the extension Options/Preferences page to change your personal runtime preferences.
+5. Reload the unpacked extension in Chrome and test again.
 
 ## Testing
 
