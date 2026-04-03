@@ -1,6 +1,11 @@
 (function () {
   const scorer = window.JobEvaluatorScorer;
   const constants = window.JobEvaluatorConstants;
+  Object.assign(constants.USER_PREFERENCES, {
+    commuteZip: "53925",
+    commuteRadiusMiles: 50,
+    enableCommutePlaceholderLogic: true
+  });
 
   const FIXTURES = {
     linkedin: `Senior Product Designer, Remote

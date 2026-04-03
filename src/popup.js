@@ -8,10 +8,15 @@
   let savedJobsState = [];
 
   document.addEventListener("DOMContentLoaded", () => {
+    initializePopup();
+  });
+
+  async function initializePopup() {
     bindEvents();
+    await loadUserPreferences();
     loadSavedJobs();
     analyzeCurrentPage();
-  });
+  }
 
   function bindEvents() {
     document.getElementById("analyzeButton").addEventListener("click", analyzeCurrentPage);
@@ -57,6 +62,17 @@
     } catch (error) {
       latestAnalysis = null;
       showError(error && error.message ? error.message : "Unable to analyze this page.");
+    }
+  }
+
+  async function loadUserPreferences() {
+    try {
+      const preferences = await storage.getUserPreferences();
+      if (preferences && typeof preferences === "object") {
+        Object.assign(JobEvaluatorConstants.USER_PREFERENCES, preferences);
+      }
+    } catch (error) {
+      setStatus("Could not load saved preferences. Using defaults.", "error");
     }
   }
 

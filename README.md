@@ -41,6 +41,9 @@ job-evaluator/
   src/
     background.js
     content.js
+    options.css
+    options.html
+    options.js
     popup.html
     popup.css
     popup.js
@@ -186,23 +189,12 @@ Negative signals include:
 
 ## Personal Tuning
 
-Personal preferences live in [constants.js](src/constants.js) in the `USER_PREFERENCES` object:
+Personal preferences are configured in the extension Options page (`chrome://extensions` -> Job Evaluator -> `Extension options`) and saved in `chrome.storage.local`.
 
-```js
-const USER_PREFERENCES = {
-  penalizeHybridHeavily: true,
-  preferAccessibilityRoles: true,
-  preferProductUXOverMarketingUX: true,
-  preferRemoteRoles: true,
-  preferRemoteOnly: false,
-  commuteZip: "53925",
-  commuteRadiusMiles: 50,
-  enableCommutePlaceholderLogic: true
-};
-```
+The committed defaults/schemas live in [constants.js](src/constants.js) under `DEFAULT_USER_PREFERENCES`, and runtime values are loaded through [storage.js](src/storage.js).
 
-When `enableCommutePlaceholderLogic` is enabled, hybrid roles can receive a small `work model fit` boost when the posting text appears commute-friendly for your configured home ZIP and radius (for example, `53925` within `50` miles).
-The keyword hints used for this matching live in [constants.js](src/constants.js) under `COMMUTE_RADIUS_HINTS`.
+When `enableCommutePlaceholderLogic` is enabled, hybrid roles can receive a small `work model fit` boost when the posting text appears commute-friendly for your configured home ZIP and radius.
+The optional keyword hint map for this matching lives in [constants.js](src/constants.js) under `COMMUTE_RADIUS_HINTS`.
 
 ## Extractor Coverage
 
@@ -346,6 +338,12 @@ The included icon files are tiny placeholder PNGs so the extension loads cleanly
 - [x] Increase popup width for a more comfortable viewing experience.
 - [x] [P1] Move job post URL to a new sub-section and make the full URL easier to see without taking up much screen real estate.
 - [ ] [P2] Refactor scorer.js so it correctly scores on-site and hybrid jobs that are located within a 25 mile radius the same as a fully remote job.
+  - Define which signals qualify as "within 25 miles" (for example, ZIP match, city/state hints, explicit radius text, optional geocoding).
+  - Clarify whether "same as fully remote" applies to `remoteAuthenticity` only or to the overall weighted score outcome.
+  - Define behavior for conflicting signals (for example, local hybrid role but `travel required` appears).
+  - Clarify whether this rule is always-on or gated by `enableCommutePlaceholderLogic`.
+  - Specify whether existing hybrid/onsite penalties should be fully neutralized or only partially offset when local.
+  - Add test fixtures and explicit pass/fail expectations for local hybrid/onsite scenarios.
 - [ ] [P3] Convert analysis section layout into a tabbed UI so results are easier to review.
 - [ ] [P4] Create a text-blob extractor that accepts a pasted/raw job posting text block and returns normalized extraction fields.
 
@@ -353,6 +351,12 @@ The included icon files are tiny placeholder PNGs so the extension loads cleanly
 
 - [ ] Add "Post Age" functionality to analyze how long a job has been posted.
 - [ ] Treat education requirements like "Bachelor's degree in HCI, Human Cognition, Interaction Design, or Human Factors (with equivalent 10+ years UX experience)" as a 100% education match.
+- [ ] Add popup UI to accept resume upload.
+- [ ] Add popup UI to count and match keywords found in the job description and uploaded resume.
+- [ ] Add a linked gear icon in the popup upper-right area to open the Preferences page.
+- [ ] Create a Help pane with FAQ-style content derived from README guidance.
+- [ ] Add a linked help icon in the popup upper-right area to open the Help pane.
+- [ ] Redesign the popup upper-right region to optimize icon positioning and display.
 
 ## Sample Test Data
 
