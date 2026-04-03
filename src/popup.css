@@ -25,7 +25,7 @@ body {
   margin: 0;
   background: radial-gradient(circle at top, #fcf3dc 0%, var(--bg) 55%, #ece6d5 100%);
   color: var(--text);
-  width: 420px;
+  width: 640px;
   min-height: 560px;
 }
 
@@ -120,7 +120,7 @@ h3 {
 .card {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 8px;
   padding: 16px;
   box-shadow: var(--shadow);
   margin-bottom: 14px;
@@ -428,7 +428,7 @@ a:focus-visible {
   grid-template-columns: 1fr auto;
   gap: 12px;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 8px;
   padding: 10px;
   background: rgba(255, 255, 255, 0.65);
 }
