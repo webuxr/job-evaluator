@@ -270,14 +270,15 @@
     return buildFromContainer(
       container,
       {
-        roleTitle:
+        roleTitle: sanitizeIndeedRoleTitle(
           utils.textFromSelectors([
             "[data-testid='jobsearch-JobInfoHeader-title']",
             ".jobsearch-JobInfoHeader-title",
             "h1[data-testid]",
             "h2[data-testid='jobsearch-JobInfoHeader-title']",
             "h1"
-          ]) || indeedTitleParts.roleTitle,
+          ]) || indeedTitleParts.roleTitle
+        ),
         company:
           utils.textFromSelectors([
             "[data-testid='inlineHeader-companyName']",
@@ -346,8 +347,7 @@
       return { roleTitle: "", company: "" };
     }
 
-    const normalized = title
-      .replace(/\s*-\s*job post.*$/i, "")
+    const normalized = sanitizeIndeedRoleTitle(title)
       .replace(/\s*\|\s*Indeed.*$/i, "")
       .trim();
 
@@ -371,6 +371,10 @@
       roleTitle: normalized,
       company: ""
     };
+  }
+
+  function sanitizeIndeedRoleTitle(titleText) {
+    return utils.cleanText(String(titleText || "")).replace(/\s*-\s*job post.*$/i, "").trim();
   }
 
   function extractGreenhouse() {

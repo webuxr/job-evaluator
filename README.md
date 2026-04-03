@@ -339,7 +339,7 @@ The included icon files are tiny placeholder PNGs so the extension loads cleanly
 - [ ] [P5] Create a text-blob extractor that accepts a pasted/raw job posting text block and returns normalized extraction fields.
 - [ ] [P3] Clean up saved job post URLs so the full canonical job post URL appears in the tooltip.
 - [ ] [P4] Convert analysis section layout into a tabbed UI so results are easier to review.
-- [ ] [P1] Pick improved green/yellow/orange/red colors for overall score indicators and labels.
+- [x] [P1] Pick improved green/yellow/orange/red colors for overall score indicators and labels (`#198754`, `#b02a37`, `#fd7e14`, `#ffc107`).
 - [ ] [P2] Increase popup width for a more comfortable viewing experience.
 
 ## Sample Test Data

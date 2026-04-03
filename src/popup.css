@@ -8,8 +8,10 @@
   --muted: #5d655f;
   --primary: #1c6b57;
   --primary-dark: #164d40;
-  --danger: #9f3b2f;
-  --success: #2b6b3d;
+  --danger: #b02a37;
+  --success: #198754;
+  --score-orange: #fd7e14;
+  --score-yellow: #ffc107;
   --badge: #eee6d6;
   --shadow: 0 10px 24px rgba(39, 42, 33, 0.08);
   --focus-outline: #0f5bd5;
@@ -222,20 +224,20 @@ a:focus-visible {
 }
 
 .score-pill--green {
-  background: linear-gradient(135deg, #184d2d 0%, #2b8a4a 100%);
+  background: var(--success);
 }
 
 .score-pill--orange {
-  background: linear-gradient(135deg, #8c4f14 0%, #d67a1f 100%);
+  background: var(--score-orange);
 }
 
 .score-pill--yellow {
-  background: linear-gradient(135deg, #8a6b14 0%, #d4b11f 100%);
+  background: var(--score-yellow);
   color: #2f2810;
 }
 
 .score-pill--red {
-  background: linear-gradient(135deg, #74231c 0%, #bf4536 100%);
+  background: var(--danger);
 }
 
 .result-header {
@@ -285,8 +287,8 @@ a:focus-visible {
 }
 
 .badge--mixed {
-  background: #f2ebd9;
-  color: #7a5a1f;
+  background: rgba(253, 126, 20, 0.16);
+  color: var(--score-orange);
 }
 
 .badge--bad {
@@ -527,23 +529,23 @@ a:focus-visible {
 }
 
 .saved-score--green {
-  background: #dff2e4;
-  color: #1f5a32;
+  background: rgba(25, 135, 84, 0.16);
+  color: var(--success);
 }
 
 .saved-score--orange {
-  background: #f8e3cf;
-  color: #8c4f14;
+  background: rgba(253, 126, 20, 0.16);
+  color: var(--score-orange);
 }
 
 .saved-score--yellow {
-  background: #f7efc9;
-  color: #6f5810;
+  background: rgba(255, 193, 7, 0.24);
+  color: #7a5a1f;
 }
 
 .saved-score--red {
-  background: #f6dfdb;
-  color: #8f3126;
+  background: rgba(176, 42, 55, 0.16);
+  color: var(--danger);
 }
 
 .delete-link {
