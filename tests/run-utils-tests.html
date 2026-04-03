@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Job Evaluator Utility Tests</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        --bg: #f4f1e8;
+        --card: #fffdf8;
+        --border: #d8d0bf;
+        --text: #1d241f;
+        --muted: #5d655f;
+        --success: #2b6b3d;
+        --danger: #9f3b2f;
+        --warning: #7a5a1f;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 24px;
+        background: radial-gradient(circle at top, #fcf3dc 0%, var(--bg) 55%, #ece6d5 100%);
+        color: var(--text);
+      }
+
+      .shell {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      .toolbar,
+      .summary,
+      .case-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .toolbar {
+        margin-bottom: 18px;
+      }
+
+      .button {
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: #f7f3ea;
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 600;
+        padding: 10px 14px;
+        cursor: pointer;
+      }
+
+      .button:hover {
+        background: #f0eadf;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: 0 10px 24px rgba(39, 42, 33, 0.08);
+        margin-bottom: 14px;
+      }
+
+      .summary {
+        margin-bottom: 18px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .pill--pass {
+        background: #dff2e4;
+        color: var(--success);
+      }
+
+      .pill--fail {
+        background: #f6dfdb;
+        color: var(--danger);
+      }
+
+      .pill--warn {
+        background: #f2ebd9;
+        color: var(--warning);
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .assertions {
+        list-style: none;
+        padding: 0;
+        margin: 12px 0 0;
+      }
+
+      .assertions li {
+        padding: 8px 0;
+        border-bottom: 1px dashed rgba(93, 101, 95, 0.18);
+        font-size: 13px;
+      }
+
+      .assertions li:last-child {
+        border-bottom: 0;
+      }
+
+      .assertion-pass {
+        color: var(--success);
+      }
+
+      .assertion-fail {
+        color: var(--danger);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="toolbar">
+        <div>
+          <p class="muted">Ad-hoc Regression Runner</p>
+          <h1>Job Evaluator Utility Tests</h1>
+        </div>
+        <button id="runTestsButton" class="button" type="button">Run Tests</button>
+      </div>
+
+      <section id="summaryCard" class="card summary">
+        <div>
+          <strong>Not run yet</strong>
+          <p class="muted">Open this page in a browser and click Run Tests.</p>
+        </div>
+        <span class="pill pill--warn">Idle</span>
+      </section>
+
+      <div id="resultsRoot"></div>
+    </div>
+
+    <script src="../src/constants.js"></script>
+    <script src="../src/utils.js"></script>
+    <script src="./utils-tests.js"></script>
+  </body>
+</html>

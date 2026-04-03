@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Job Evaluator</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+
+<body>
+  <div class="app">
+    <header class="app__header">
+      <div>
+        <p class="eyebrow">Chrome Extension MVP</p>
+        <h1>Job Evaluator</h1>
+      </div>
+      <div class="header-controls">
+        <span id="statusDot" class="status-dot status-dot--idle" aria-hidden="true"></span>
+        <button
+          id="analyzeButton"
+          class="icon-button"
+          type="button"
+          title="Re-analyze current page"
+          aria-label="Re-analyze current page"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M20 12a8 8 0 1 1-2.34-5.66"
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.9"
+            />
+            <path
+              d="M20 4v5h-5"
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.9"
+            />
+          </svg>
+        </button>
+        <span id="statusMessage" class="status-text" role="status" aria-live="polite">Open a job posting page to analyze it.</span>
+      </div>
+    </header>
+
+    <section id="resultCard" class="card hidden">
+      <div class="result-header">
+        <div>
+          <p class="label">Current Job Analysis</p>
+          <h2 id="roleTitle">Unknown role</h2>
+          <div class="company-block">
+            <span class="label">Company</span>
+            <p id="companyLine" class="company-line">Unknown company</p>
+          </div>
+        </div>
+        <div class="score-pill">
+          <span id="overallScore">--</span>
+        </div>
+      </div>
+
+      <div class="verdict-row">
+        <span id="verdictBadge" class="badge">Waiting</span>
+      </div>
+
+      <div class="meta-grid">
+        <div>
+          <span class="label">Location</span>
+          <p id="locationText">—</p>
+        </div>
+        <div>
+          <span class="label">Salary</span>
+          <p id="salaryText">—</p>
+        </div>
+      </div>
+
+      <div class="meta-block">
+        <span class="label">Job Meta</span>
+        <ul id="jobMetaList" class="meta-list">
+          <li>—</li>
+        </ul>
+      </div>
+
+      <div id="differencesBlock" class="signals-block hidden">
+        <h3>Differences Found</h3>
+        <ul id="differencesList" class="explanation-list"></ul>
+      </div>
+
+      <div class="subscores-block">
+        <div class="subscores">
+          <h3>Scores</h3>
+          <div class="subscore-row">
+            <span>Work Model Fit</span>
+            <strong id="remoteAuthenticityScore">--</strong>
+          </div>
+          <div class="subscore-row">
+            <span>UX Role Quality</span>
+            <strong id="uxRoleQualityScore">--</strong>
+          </div>
+          <div class="subscore-row">
+            <span>Trust / Legitimacy</span>
+            <strong id="trustLegitimacyScore">--</strong>
+          </div>
+          <div class="subscore-row">
+            <span>Application Quality</span>
+            <strong id="applicationQualityScore">--</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="flag-columns">
+        <div>
+          <h3>Red Flags</h3>
+          <ul id="redFlagsList" class="flag-list"></ul>
+        </div>
+        <div>
+          <h3>Green Flags</h3>
+          <ul id="greenFlagsList" class="flag-list"></ul>
+        </div>
+      </div>
+
+      <div class="why-block">
+        <h3>Why</h3>
+        <ul id="explanationList" class="explanation-list"></ul>
+      </div>
+
+      <div class="button-row action-row">
+        <button id="copyButton" class="button" type="button">Copy Summary</button>
+        <button id="copyDescriptionButton" class="button" type="button">Copy Job Description</button>
+        <button id="saveButton" class="button" type="button">Save Result</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="saved-header">
+        <div>
+          <p class="label">Saved Jobs</p>
+          <h2>Saved Results</h2>
+        </div>
+      </div>
+      <div id="savedJobsEmpty" class="empty-state">No saved jobs yet.</div>
+      <ul id="savedJobsList" class="saved-list"></ul>
+    </section>
+  </div>
+
+  <script src="constants.js"></script>
+  <script src="utils.js"></script>
+  <script src="scorer.js"></script>
+  <script src="storage.js"></script>
+  <script src="popup.js"></script>
+</body>
+
+</html>
