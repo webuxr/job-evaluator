@@ -1,8 +1,8 @@
 (function () {
-  const appName = RemoteUxRealityTestConstants.APP_NAME;
-  const utils = RemoteUxRealityTestUtils;
-  const scorer = RemoteUxRealityTestScorer;
-  const storage = RemoteUxRealityTestStorage;
+  const appName = JobEvaluatorConstants.APP_NAME;
+  const utils = JobEvaluatorUtils;
+  const scorer = JobEvaluatorScorer;
+  const storage = JobEvaluatorStorage;
 
   let latestAnalysis = null;
   let savedJobsState = [];
@@ -72,6 +72,7 @@
       applyUrl: extraction.applyUrl || "",
       applyText: extraction.applyText || "",
       fullJobText: extraction.fullJobText || "",
+      hasSimplifyJobsShadowRoot: Boolean(extraction.hasSimplifyJobsShadowRoot),
       reasoningSnippets: Array.isArray(extraction.reasoningSnippets) ? extraction.reasoningSnippets : [],
       extractorUsed: extraction.extractorUsed || "generic"
     };
@@ -606,7 +607,7 @@
   }
 
   if (typeof window !== "undefined") {
-    window.RemoteUxRealityTestPopupTestHooks = {
+    window.JobEvaluatorPopupTestHooks = {
       applyStarToggle,
       normalizeSavedJobs,
       sortSavedJobs

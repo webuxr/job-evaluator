@@ -1,6 +1,6 @@
 (function () {
-  const scorer = window.RemoteUxRealityTestScorer;
-  const constants = window.RemoteUxRealityTestConstants;
+  const scorer = window.JobEvaluatorScorer;
+  const constants = window.JobEvaluatorConstants;
 
   const FIXTURES = {
     linkedin: `Senior Product Designer, Remote
@@ -107,6 +107,40 @@ The role is full-time and includes in office collaboration.
 Responsibilities
 - Support wireframes and prototypes
 - Work with product and engineering teams
+`,
+
+    greenhouseAutofill: `Senior Product Designer
+Outside Interactive
+Boulder, CO
+
+This role includes standard application details and a dedicated Greenhouse autofill path.
+Click the button labeled "Autofill with MyGreenhouse" to speed up the application process.
+`,
+
+    restrictedRemote: `Staff Product Designer
+Example Co.
+Remote
+
+This is one of our entirely remote jobs that could be performed in Colorado.
+Candidates must be legally authorized to work in the United States.
+`,
+
+    devStackRequirements: `Product Designer
+Productive Labs
+Remote
+
+Requirements
+- 5+ years of UX design experience
+- React and Next.js experience required
+- Strong TypeScript and Node.js understanding
+- Angular familiarity is a plus
+`,
+
+    simplifyExtensionDetected: `Senior Product Designer
+Trail Works
+Remote
+
+Application details and helper UI are available on this page.
 `
   };
 
@@ -204,7 +238,7 @@ Responsibilities
         fullJobText: FIXTURES.hybridLocal
       }),
       assertions: [
-        expectRemoteSignal("city-level hybrid commute boost (Madison, WI)")
+        expectWorkModelSignal("city-level hybrid commute boost (Madison, WI)")
       ]
     },
     {
@@ -221,7 +255,7 @@ Responsibilities
         fullJobText: FIXTURES.hybridWisconsinOnly
       }),
       assertions: [
-        expectRemoteSignal("state-level hybrid commute boost (Wisconsin)")
+        expectWorkModelSignal("state-level hybrid commute boost (Wisconsin)")
       ]
     },
     {
@@ -258,6 +292,75 @@ Responsibilities
       assertions: [
         expectFlag("redFlags", "Entry-level role"),
         expectUxSignalNegative("entry-level role")
+      ]
+    },
+    {
+      name: "Greenhouse autofill CTA adds a positive application flag",
+      input: makeExtraction({
+        url: "https://www.outsideinc.com/openings/?gh_jid=5022834008",
+        roleTitle: "Senior Product Designer",
+        company: "Outside Interactive",
+        locationText: "Boulder, CO",
+        salaryText: "",
+        applyUrl: "",
+        applyText: "Autofill with MyGreenhouse",
+        extractorUsed: "generic",
+        fullJobText: FIXTURES.greenhouseAutofill
+      }),
+      assertions: [
+        expectGreenFlag("Greenhouse autofill available")
+      ]
+    },
+    {
+      name: "Location-limited remote wording is flagged as restricted remote",
+      input: makeExtraction({
+        url: "https://jobs.example.com/role/restricted-remote",
+        roleTitle: "Staff Product Designer",
+        company: "Example Co.",
+        locationText: "Remote",
+        salaryText: "",
+        applyUrl: "",
+        applyText: "Apply now",
+        extractorUsed: "generic",
+        fullJobText: FIXTURES.restrictedRemote
+      }),
+      assertions: [
+        expectFlag("redFlags", "Location-restricted remote")
+      ]
+    },
+    {
+      name: "Dev-stack terms in requirements trigger red flag",
+      input: makeExtraction({
+        url: "https://jobs.example.com/role/dev-stack",
+        roleTitle: "Product Designer",
+        company: "Productive Labs",
+        locationText: "Remote",
+        salaryText: "",
+        applyUrl: "",
+        applyText: "Apply",
+        extractorUsed: "generic",
+        fullJobText: FIXTURES.devStackRequirements
+      }),
+      assertions: [
+        expectFlag("redFlags", "Dev-stack requirement")
+      ]
+    },
+    {
+      name: "Simplify extension marker adds a positive helper flag",
+      input: makeExtraction({
+        url: "https://jobs.example.com/role/simplify",
+        roleTitle: "Senior Product Designer",
+        company: "Trail Works",
+        locationText: "Remote",
+        salaryText: "",
+        applyUrl: "",
+        applyText: "Apply",
+        fullJobText: FIXTURES.simplifyExtensionDetected,
+        hasSimplifyJobsShadowRoot: true,
+        extractorUsed: "generic"
+      }),
+      assertions: [
+        expectGreenFlag("Simplify Jobs helper detected")
       ]
     }
   ];
@@ -365,6 +468,7 @@ Responsibilities
         applyUrl: "",
         applyText: "",
         fullJobText: "",
+        hasSimplifyJobsShadowRoot: false,
         reasoningSnippets: [],
         extractorUsed: "generic"
       },
@@ -443,12 +547,12 @@ Responsibilities
     };
   }
 
-  function expectRemoteSignal(phrase) {
+  function expectWorkModelSignal(phrase) {
     return function (result) {
-      const remoteSignals = result.matchedSignals && Array.isArray(result.matchedSignals.remoteAuthenticity)
+      const workModelSignals = result.matchedSignals && Array.isArray(result.matchedSignals.remoteAuthenticity)
         ? result.matchedSignals.remoteAuthenticity
         : [];
-      const pass = remoteSignals.some((signal) => signal && signal.phrase === phrase && signal.direction === "positive");
+      const pass = workModelSignals.some((signal) => signal && signal.phrase === phrase && signal.direction === "positive");
       return {
         pass,
         message: 'Expected remoteAuthenticity signals to include positive phrase "' + phrase + '".'

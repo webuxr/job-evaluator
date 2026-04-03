@@ -225,7 +225,7 @@
     }
 
     const match =
-      haystack.match(/\$\s?\d[\d,]*(?:\s?-\s?\$?\s?\d[\d,]*)?(?:\s?(?:per year|\/year|yearly|annually|per hour|\/hour|hourly))?/i) ||
+      haystack.match(/\$\s?\d[\d,]*(?:\s?(?:-|–|to)\s?\$?\s?\d[\d,]*)?(?:\s?(?:per year|\/year|yearly|annually|per hour|\/hour|hourly))?/i) ||
       haystack.match(/\b\d{2,3}k\s?-\s?\d{2,3}k\b/i) ||
       haystack.match(/\b\d{2,3},\d{3}\s?-\s?\d{2,3},\d{3}\b/);
 
@@ -238,7 +238,7 @@
       return "";
     }
 
-    const hasRange = candidate.includes("-");
+    const hasRange = /-|–|\bto\b/i.test(candidate);
     const hasUnit = /per year|\/year|yearly|annually|per hour|\/hour|hourly|per week|\/week|weekly|per month|\/month|monthly/i.test(candidate);
     const hasK = /\bk\b/i.test(candidate);
 
@@ -272,15 +272,85 @@
   function extractApplyInfo(root) {
     const scope = root || document;
     const links = Array.from(scope.querySelectorAll("a, button"));
-    const candidate = links.find((element) => {
-      const text = normalizeWhitespace(element.innerText || element.textContent || "");
+    const getElementText = (element) => {
+      return normalizeWhitespace(
+        element.innerText ||
+          element.textContent ||
+          element.getAttribute("aria-label") ||
+          element.getAttribute("title") ||
+          element.getAttribute("value") ||
+          ""
+      );
+    };
+    const autofillCandidate = links.find((element) => {
+      const text = getElementText(element);
+      const className = String(element.className || "");
+      return /autofill with mygreenhouse/i.test(text) || (/btn--pill/.test(className) && /autofill/i.test(text));
+    });
+    const applyCandidate = links.find((element) => {
+      const text = getElementText(element);
       return /apply|easy apply|submit application|start application|apply now/i.test(text);
     });
+    const candidate = autofillCandidate || applyCandidate;
+
+    if (!candidate) {
+      const pageText = normalizeWhitespace(
+        (scope.body && scope.body.innerText) ||
+          (scope.documentElement && scope.documentElement.innerText) ||
+          ""
+      );
+      if (/autofill with mygreenhouse/i.test(pageText)) {
+        return {
+          applyUrl: "",
+          applyText: "Autofill with MyGreenhouse"
+        };
+      }
+    }
 
     return {
       applyUrl: candidate && candidate.href ? candidate.href : "",
-      applyText: candidate ? normalizeWhitespace(candidate.innerText || candidate.textContent || "") : ""
+      applyText: candidate ? getElementText(candidate) : ""
     };
+  }
+
+  function hasGreenhouseProxyEmbed(root) {
+    const scope = root || document;
+    const frames = Array.from(scope.querySelectorAll("iframe[src]"));
+
+    return frames.some((frame) => {
+      const rawSrc = String(frame.getAttribute("src") || "");
+      if (!rawSrc) {
+        return false;
+      }
+
+      let parsed;
+      try {
+        parsed = new URL(rawSrc, window.location.href);
+      } catch (error) {
+        return false;
+      }
+
+      const isGoogleProxyHost = parsed.hostname === "content.googleapis.com";
+      const isProxyPath = parsed.pathname === "/static/proxy.html";
+      if (!isGoogleProxyHost || !isProxyPath) {
+        return false;
+      }
+
+      const searchText = parsed.search || "";
+      const hashText = parsed.hash || "";
+      const decodedSearch = safeDecodeURIComponent(searchText);
+      const decodedHash = safeDecodeURIComponent(hashText);
+
+      return /job-boards\.greenhouse\.io/i.test(searchText + hashText + decodedSearch + decodedHash);
+    });
+  }
+
+  function safeDecodeURIComponent(value) {
+    try {
+      return decodeURIComponent(String(value || ""));
+    } catch (error) {
+      return String(value || "");
+    }
   }
 
   function detectPlatform(url) {
@@ -294,8 +364,11 @@
     if (lower.includes("greenhouse.io")) {
       return "greenhouse";
     }
-    if (lower.includes("jobs.lever.co")) {
-      return "lever";
+    if (/[?&]gh_jid=/.test(lower)) {
+      return "greenhouse";
+    }
+    if (hasGreenhouseProxyEmbed(document)) {
+      return "greenhouse";
     }
     if (lower.includes("dice.com")) {
       return "dice";
@@ -404,7 +477,7 @@
       .replace(/'/g, "&#039;");
   }
 
-  global.RemoteUxRealityTestUtils = {
+  global.JobEvaluatorUtils = {
     clamp,
     cleanText,
     companyFromTitle,
@@ -414,6 +487,7 @@
     detectPlatform,
     escapeHtml,
     extractApplyInfo,
+    hasGreenhouseProxyEmbed,
     firstButtonLikeText,
     firstHrefFromSelectors,
     formatDateTime,

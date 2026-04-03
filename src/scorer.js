@@ -1,6 +1,6 @@
 (function (global) {
-  const constants = global.RemoteUxRealityTestConstants;
-  const utils = global.RemoteUxRealityTestUtils;
+  const constants = global.JobEvaluatorConstants;
+  const utils = global.JobEvaluatorUtils;
 
   const CATEGORY_RULES = {
     remoteAuthenticity: {
@@ -82,6 +82,7 @@
 
     applyRules(scores, flags, matchedSignals, combinedText, "remoteAuthenticity", CATEGORY_RULES.remoteAuthenticity);
     applyRules(scores, flags, matchedSignals, combinedText, "uxRoleQuality", CATEGORY_RULES.uxRoleQuality);
+    applyLocationRestrictedWorkModelHeuristic(scores, flags, matchedSignals, combinedText);
     applyUxHeuristics(scores, flags, matchedSignals, normalized, combinedText);
     applyTrustHeuristics(scores, flags, matchedSignals, normalized, combinedText);
     applyApplicationHeuristics(scores, flags, matchedSignals, normalized, combinedText);
@@ -123,6 +124,7 @@
       extraction.roleTitle,
       extraction.company,
       extraction.locationText,
+      extraction.jobMetaText,
       extraction.salaryText,
       extraction.applyText,
       extraction.applyUrl,
@@ -149,6 +151,20 @@
         addFlag(flags.red, matchedSignals, rule.flag, rule.phrase);
       }
     });
+  }
+
+  function applyLocationRestrictedWorkModelHeuristic(scores, flags, matchedSignals, combinedText) {
+    const hasLocationLimitedPhrase =
+      /\bentirely remote\b[\s\S]{0,120}\bcould be performed in\b/i.test(combinedText) ||
+      /\bremote\b[\s\S]{0,120}\bcould be performed in\b/i.test(combinedText);
+
+    if (!hasLocationLimitedPhrase) {
+      return;
+    }
+
+    scores.remoteAuthenticity -= 12;
+    recordSignal(matchedSignals, "remoteAuthenticity", { phrase: "location-limited remote wording", points: -12 }, false);
+    addFlag(flags.red, matchedSignals, "Location-restricted remote", "could be performed in");
   }
 
   function applyUxHeuristics(scores, flags, matchedSignals, extraction, combinedText) {
@@ -220,6 +236,15 @@
       scores.uxRoleQuality += 10;
       recordSignal(matchedSignals, "uxRoleQuality", { phrase: "education profile match", points: 10 }, true);
       addFlag(flags.green, matchedSignals, "Education background match", "degree or equivalent experience aligns");
+    }
+
+    const requirementText = String(extraction.fullJobText || "");
+    const hasDevStackRequirement =
+      /(?:requirements?|qualifications?|must have|required)[\s\S]{0,220}\b(?:react|next\.?js|typescript|node(?:\.?js)?|angular)\b/i.test(requirementText) ||
+      /\b(?:react|next\.?js|typescript|node(?:\.?js)?|angular)\b[\s\S]{0,120}(?:required|requirement|must have)\b/i.test(requirementText);
+
+    if (hasDevStackRequirement) {
+      addFlag(flags.red, matchedSignals, "Dev-stack requirement", "React/Next.js/TypeScript/Node/Angular requirement");
     }
   }
 
@@ -323,7 +348,8 @@
     const applyText = String(extraction.applyText || "");
     const directCareersSignal = /\/careers|\/jobs|careers\./i.test(currentUrl);
     const clearApplyFlow = Boolean(applyUrl || /apply|easy apply|submit application/i.test(applyText));
-    const knownApplicationFlow = /greenhouse|lever|workday/i.test(currentUrl) || /greenhouse|lever|workday/i.test(applyUrl);
+    const knownApplicationFlow = /greenhouse|workday/i.test(currentUrl) || /greenhouse|workday/i.test(applyUrl);
+    const hasGreenhouseAutofill = /\bautofill with mygreenhouse\b/i.test(combinedText);
 
     if (knownApplicationFlow) {
       scores.applicationQuality += 10;
@@ -334,6 +360,14 @@
     if (clearApplyFlow) {
       scores.applicationQuality += 10;
       recordSignal(matchedSignals, "applicationQuality", { phrase: "clear application flow", points: 10 }, true);
+    }
+
+    if (hasGreenhouseAutofill) {
+      addFlag(flags.green, matchedSignals, "Greenhouse autofill available", "Autofill with MyGreenhouse");
+    }
+
+    if (extraction.hasSimplifyJobsShadowRoot) {
+      addFlag(flags.green, matchedSignals, "Simplify Jobs helper detected", "div.simplify-jobs-shadow-root");
     }
 
     if (directCareersSignal) {
@@ -580,7 +614,7 @@
     return explanation.slice(0, 5);
   }
 
-  global.RemoteUxRealityTestScorer = {
+  global.JobEvaluatorScorer = {
     scorePosting
   };
 })(globalThis);

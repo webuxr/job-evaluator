@@ -14,7 +14,7 @@ Job Evaluator is a local-only Chrome extension MVP that inspects any current job
 
 1. The popup opens and asks the background service worker to analyze the active tab.
 2. The background worker injects the extractor/content scripts into the current page only when needed.
-3. The content script reads visible page data and returns a normalized payload.
+3. The content script reads visible page data and returns a normalized payload. For embedded Greenhouse pages with `gh_jid`, it also enriches from the Greenhouse board API when available.
 4. The popup applies a deterministic local rubric to compute category scores, flags, verdict, and explanation.
 5. You can copy the summary, copy the extracted job description, and save the full result in `chrome.storage.local`.
 6. Saved results can be reopened, auto-sorted by score, starred, highlighted when they match the current page, and compared against the current analysis through `Differences Found`.
@@ -22,7 +22,8 @@ Job Evaluator is a local-only Chrome extension MVP that inspects any current job
 Everything runs locally:
 
 - No backend
-- No external APIs
+- No proprietary/external vendor backend
+- Public ATS endpoints (for example, Greenhouse board API) may be queried for embedded job pages when needed for extraction completeness
 - No LLM calls
 - No build step
 
@@ -169,7 +170,9 @@ Negative signals include:
 
 Positive signals include:
 
-- Greenhouse / Lever / Workday detected
+- Greenhouse / Workday detected
+- `Autofill with MyGreenhouse` detected
+- Simplify helper marker detected (`div.simplify-jobs-shadow-root`)
 - clear application flow
 - direct company careers page signals
 
@@ -214,7 +217,6 @@ These are the currently prioritized extractor paths because they represent the m
 
 These are still supported, but currently lower priority for QA and iteration:
 
-- Lever
 - Simplify Jobs
 
 ### Generic Fallback
@@ -231,9 +233,10 @@ Unknown job pages fall back to a generic extractor that uses:
 
 - LinkedIn often hides some description content behind progressive disclosure or logged-in UI states. Collection URLs can also be noisier than direct job URLs.
 - Indeed supports both `?vjk=` and `viewjob?jk=` URLs. The extractor now cleans location labels such as `Job address`.
-- Greenhouse supports both standard posting pages and `my.greenhouse.io/applications/...` style application pages.
-- Lever is a platform-style job-hosting path rather than a mainstream destination board, so it is kept as secondary coverage.
+- Greenhouse supports standard posting pages, `my.greenhouse.io/applications/...` style pages, and embedded `gh_jid` flows on third-party company sites.
+- For embedded Greenhouse flows, board token detection first uses explicit `for=` values and then hostname/meta-title candidate fallback.
 - Dice can mix recruiter language and platform chrome into the description, so noise filtering still matters.
+- If the Simplify browser extension is active and authenticated, the page may include `div.simplify-jobs-shadow-root`, which is surfaced as a positive helper signal.
 - Glassdoor does not currently have a dedicated extractor. It would use the generic fallback until a site-specific extractor is added.
 
 ## Limitations
@@ -242,6 +245,8 @@ Unknown job pages fall back to a generic extractor that uses:
 - It does not click hidden accordions or paginate descriptions.
 - It does not guarantee the listing is genuine; it only scores observable signals.
 - It does not fully interpret commute distance or geo-fencing yet.
+- Some company sites are bot-protected (for example, Cloudflare challenge pages), which can limit what source HTML is directly visible for debugging outside the browser session.
+- Simplify helper detection depends on the Simplify extension injecting its UI (often requires Simplify authentication).
 - Some sites may render content late enough that a second analyze click helps.
 - Saved-job matching currently keys off the job URL, so materially different URLs for the same job may not compare automatically.
 
@@ -303,7 +308,6 @@ For extractor QA, test at least one live page for each supported source:
 - Indeed
 - Greenhouse
 - Dice
-- Lever
 - Simplify Jobs
 - one generic fallback page
 

@@ -1,5 +1,5 @@
 (function (global) {
-  const constants = global.RemoteUxRealityTestConstants;
+  const constants = global.JobEvaluatorConstants;
 
   function getSavedJobs() {
     return new Promise((resolve, reject) => {
@@ -73,7 +73,7 @@
     return source.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase();
   }
 
-  global.RemoteUxRealityTestStorage = {
+  global.JobEvaluatorStorage = {
     deleteSavedJob,
     getSavedJobs,
     setSavedJobs,

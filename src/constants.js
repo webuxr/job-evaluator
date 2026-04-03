@@ -37,7 +37,6 @@
   const KNOWN_ATS_HOSTS = [
     "boards.greenhouse.io",
     "greenhouse.io",
-    "jobs.lever.co",
     "boards.eu.greenhouse.io",
     "myworkdayjobs.com",
     "workday.com",
@@ -83,13 +82,12 @@
     linkedin: "linkedin",
     indeed: "indeed",
     greenhouse: "greenhouse",
-    lever: "lever",
     dice: "dice",
     simplify: "simplify",
     generic: "generic"
   };
 
-  global.RemoteUxRealityTestConstants = {
+  global.JobEvaluatorConstants = {
     APP_NAME,
     STORAGE_KEY,
     MAX_SAVED_JOBS,
