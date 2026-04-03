@@ -14,7 +14,7 @@ Job Evaluator is a local-only Chrome extension MVP that inspects any current job
 
 1. The popup opens and asks the background service worker to analyze the active tab.
 2. The background worker injects the extractor/content scripts into the current page only when needed.
-3. The content script reads visible page data and returns a normalized payload.
+3. The content script reads visible page data and returns a normalized payload. For embedded Greenhouse pages with `gh_jid`, it also enriches from the Greenhouse board API when available.
 4. The popup applies a deterministic local rubric to compute category scores, flags, verdict, and explanation.
 5. You can copy the summary, copy the extracted job description, and save the full result in `chrome.storage.local`.
 6. Saved results can be reopened, auto-sorted by score, starred, highlighted when they match the current page, and compared against the current analysis through `Differences Found`.
@@ -22,7 +22,8 @@ Job Evaluator is a local-only Chrome extension MVP that inspects any current job
 Everything runs locally:
 
 - No backend
-- No external APIs
+- No proprietary/external vendor backend
+- Public ATS endpoints (for example, Greenhouse board API) may be queried for embedded job pages when needed for extraction completeness
 - No LLM calls
 - No build step
 
@@ -40,6 +41,9 @@ job-evaluator/
   src/
     background.js
     content.js
+    options.css
+    options.html
+    options.js
     popup.html
     popup.css
     popup.js
@@ -67,7 +71,9 @@ The popup is intentionally compact:
 
 - header with status dot and re-analyze control
 - current page analysis card with a color-coded overall score
-- verdict, location, salary, and optional job-meta list
+- verdict, location, salary, and a two-column details section
+- left detail column: optional `Job Meta` list
+- right detail column: `JOB POST URL` with full clickable job URL (opens in a new tab)
 - `Differences Found` shown only when a saved version of the same job has actually changed
 - weighted score breakdown
 - red flags, green flags, and short explanation
@@ -169,7 +175,9 @@ Negative signals include:
 
 Positive signals include:
 
-- Greenhouse / Lever / Workday detected
+- Greenhouse / Workday detected
+- `Autofill with MyGreenhouse` detected
+- Simplify helper marker detected (`div.simplify-jobs-shadow-root`)
 - clear application flow
 - direct company careers page signals
 
@@ -181,23 +189,12 @@ Negative signals include:
 
 ## Personal Tuning
 
-Personal preferences live in [constants.js](src/constants.js) in the `USER_PREFERENCES` object:
+Personal preferences are configured in the extension Options page (`chrome://extensions` -> Job Evaluator -> `Extension options`) and saved in `chrome.storage.local`.
 
-```js
-const USER_PREFERENCES = {
-  penalizeHybridHeavily: true,
-  preferAccessibilityRoles: true,
-  preferProductUXOverMarketingUX: true,
-  preferRemoteRoles: true,
-  preferRemoteOnly: false,
-  commuteZip: "53925",
-  commuteRadiusMiles: 50,
-  enableCommutePlaceholderLogic: true
-};
-```
+The committed defaults/schemas live in [constants.js](src/constants.js) under `DEFAULT_USER_PREFERENCES`, and runtime values are loaded through [storage.js](src/storage.js).
 
-When `enableCommutePlaceholderLogic` is enabled, hybrid roles can receive a small `work model fit` boost when the posting text appears commute-friendly for your configured home ZIP and radius (for example, `53925` within `50` miles).
-The keyword hints used for this matching live in [constants.js](src/constants.js) under `COMMUTE_RADIUS_HINTS`.
+When `enableCommutePlaceholderLogic` is enabled, hybrid roles can receive a small `work model fit` boost when the posting text appears commute-friendly for your configured home ZIP and radius.
+The optional keyword hint map for this matching lives in [constants.js](src/constants.js) under `COMMUTE_RADIUS_HINTS`.
 
 ## Extractor Coverage
 
@@ -214,7 +211,6 @@ These are the currently prioritized extractor paths because they represent the m
 
 These are still supported, but currently lower priority for QA and iteration:
 
-- Lever
 - Simplify Jobs
 
 ### Generic Fallback
@@ -231,9 +227,10 @@ Unknown job pages fall back to a generic extractor that uses:
 
 - LinkedIn often hides some description content behind progressive disclosure or logged-in UI states. Collection URLs can also be noisier than direct job URLs.
 - Indeed supports both `?vjk=` and `viewjob?jk=` URLs. The extractor now cleans location labels such as `Job address`.
-- Greenhouse supports both standard posting pages and `my.greenhouse.io/applications/...` style application pages.
-- Lever is a platform-style job-hosting path rather than a mainstream destination board, so it is kept as secondary coverage.
+- Greenhouse supports standard posting pages, `my.greenhouse.io/applications/...` style pages, and embedded `gh_jid` flows on third-party company sites.
+- For embedded Greenhouse flows, board token detection first uses explicit `for=` values and then hostname/meta-title candidate fallback.
 - Dice can mix recruiter language and platform chrome into the description, so noise filtering still matters.
+- If the Simplify browser extension is active and authenticated, the page may include `div.simplify-jobs-shadow-root`, which is surfaced as a positive helper signal.
 - Glassdoor does not currently have a dedicated extractor. It would use the generic fallback until a site-specific extractor is added.
 
 ## Limitations
@@ -242,6 +239,8 @@ Unknown job pages fall back to a generic extractor that uses:
 - It does not click hidden accordions or paginate descriptions.
 - It does not guarantee the listing is genuine; it only scores observable signals.
 - It does not fully interpret commute distance or geo-fencing yet.
+- Some company sites are bot-protected (for example, Cloudflare challenge pages), which can limit what source HTML is directly visible for debugging outside the browser session.
+- Simplify helper detection depends on the Simplify extension injecting its UI (often requires Simplify authentication).
 - Some sites may render content late enough that a second analyze click helps.
 - Saved-job matching currently keys off the job URL, so materially different URLs for the same job may not compare automatically.
 
@@ -303,7 +302,6 @@ For extractor QA, test at least one live page for each supported source:
 - Indeed
 - Greenhouse
 - Dice
-- Lever
 - Simplify Jobs
 - one generic fallback page
 
@@ -338,8 +336,14 @@ The included icon files are tiny placeholder PNGs so the extension loads cleanly
   - attribution/ownership notes for code and assets
 - [x] Pick improved green/yellow/orange/red colors for overall score indicators and labels (`#198754`, `#b02a37`, `#fd7e14`, `#ffc107`).
 - [x] Increase popup width for a more comfortable viewing experience.
-- [ ] [P1] Move job post URL to a new sub-section and make the full URL easier to see without taking up much screen real estate.
+- [x] [P1] Move job post URL to a new sub-section and make the full URL easier to see without taking up much screen real estate.
 - [ ] [P2] Refactor scorer.js so it correctly scores on-site and hybrid jobs that are located within a 25 mile radius the same as a fully remote job.
+  - Define which signals qualify as "within 25 miles" (for example, ZIP match, city/state hints, explicit radius text, optional geocoding).
+  - Clarify whether "same as fully remote" applies to `remoteAuthenticity` only or to the overall weighted score outcome.
+  - Define behavior for conflicting signals (for example, local hybrid role but `travel required` appears).
+  - Clarify whether this rule is always-on or gated by `enableCommutePlaceholderLogic`.
+  - Specify whether existing hybrid/onsite penalties should be fully neutralized or only partially offset when local.
+  - Add test fixtures and explicit pass/fail expectations for local hybrid/onsite scenarios.
 - [ ] [P3] Convert analysis section layout into a tabbed UI so results are easier to review.
 - [ ] [P4] Create a text-blob extractor that accepts a pasted/raw job posting text block and returns normalized extraction fields.
 
@@ -347,6 +351,12 @@ The included icon files are tiny placeholder PNGs so the extension loads cleanly
 
 - [ ] Add "Post Age" functionality to analyze how long a job has been posted.
 - [ ] Treat education requirements like "Bachelor's degree in HCI, Human Cognition, Interaction Design, or Human Factors (with equivalent 10+ years UX experience)" as a 100% education match.
+- [ ] Add popup UI to accept resume upload.
+- [ ] Add popup UI to count and match keywords found in the job description and uploaded resume.
+- [ ] Add a linked gear icon in the popup upper-right area to open the Preferences page.
+- [ ] Create a Help pane with FAQ-style content derived from README guidance.
+- [ ] Add a linked help icon in the popup upper-right area to open the Help pane.
+- [ ] Redesign the popup upper-right region to optimize icon positioning and display.
 
 ## Sample Test Data
 

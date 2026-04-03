@@ -1,17 +1,22 @@
 (function () {
-  const appName = RemoteUxRealityTestConstants.APP_NAME;
-  const utils = RemoteUxRealityTestUtils;
-  const scorer = RemoteUxRealityTestScorer;
-  const storage = RemoteUxRealityTestStorage;
+  const appName = JobEvaluatorConstants.APP_NAME;
+  const utils = JobEvaluatorUtils;
+  const scorer = JobEvaluatorScorer;
+  const storage = JobEvaluatorStorage;
 
   let latestAnalysis = null;
   let savedJobsState = [];
 
   document.addEventListener("DOMContentLoaded", () => {
+    initializePopup();
+  });
+
+  async function initializePopup() {
     bindEvents();
+    await loadUserPreferences();
     loadSavedJobs();
     analyzeCurrentPage();
-  });
+  }
 
   function bindEvents() {
     document.getElementById("analyzeButton").addEventListener("click", analyzeCurrentPage);
@@ -60,6 +65,17 @@
     }
   }
 
+  async function loadUserPreferences() {
+    try {
+      const preferences = await storage.getUserPreferences();
+      if (preferences && typeof preferences === "object") {
+        Object.assign(JobEvaluatorConstants.USER_PREFERENCES, preferences);
+      }
+    } catch (error) {
+      setStatus("Could not load saved preferences. Using defaults.", "error");
+    }
+  }
+
   function normalizeExtraction(extraction) {
     return {
       url: extraction.url || "",
@@ -72,6 +88,7 @@
       applyUrl: extraction.applyUrl || "",
       applyText: extraction.applyText || "",
       fullJobText: extraction.fullJobText || "",
+      hasSimplifyJobsShadowRoot: Boolean(extraction.hasSimplifyJobsShadowRoot),
       reasoningSnippets: Array.isArray(extraction.reasoningSnippets) ? extraction.reasoningSnippets : [],
       extractorUsed: extraction.extractorUsed || "generic"
     };
@@ -82,12 +99,8 @@
 
     document.getElementById("resultCard").classList.remove("hidden");
     document.getElementById("roleTitle").textContent = result.roleTitle || "Unknown role";
-    document.getElementById("companyLine").textContent = [
-      result.company || "Unknown company",
-      formatDisplayUrl(result.url || "")
-    ]
-      .filter(Boolean)
-      .join(" • ");
+    document.getElementById("companyLine").textContent = result.company || "Unknown company";
+    renderJobPostUrl(result.url || "");
     document.getElementById("overallScore").textContent = String(result.overallScore);
     renderOverallScoreTone(result.overallScore);
     document.getElementById("locationText").textContent = result.locationText || "—";
@@ -210,6 +223,28 @@
       item.textContent = chipText;
       container.appendChild(item);
     });
+  }
+
+  function renderJobPostUrl(rawUrl) {
+    const link = document.getElementById("jobPostUrlLink");
+    const empty = document.getElementById("jobPostUrlEmpty");
+    if (!link || !empty) {
+      return;
+    }
+
+    if (!rawUrl) {
+      link.classList.add("hidden");
+      link.removeAttribute("href");
+      link.textContent = "";
+      empty.classList.remove("hidden");
+      empty.textContent = "—";
+      return;
+    }
+
+    link.classList.remove("hidden");
+    link.href = rawUrl;
+    link.textContent = rawUrl;
+    empty.classList.add("hidden");
   }
 
   async function copySummary() {
@@ -424,29 +459,6 @@
     ].join("\n");
   }
 
-  function formatDisplayUrl(rawUrl) {
-    if (!rawUrl) {
-      return "";
-    }
-
-    try {
-      const parsed = new URL(rawUrl);
-      const hostname = parsed.hostname.replace(/^www\./, "");
-      const path = parsed.pathname.replace(/\/+$/, "") || "/";
-
-      if (hostname.includes("linkedin.com")) {
-        const currentJobId = parsed.searchParams.get("currentJobId");
-        if (currentJobId) {
-          return "linkedin.com/jobs/...#" + currentJobId;
-        }
-      }
-
-      return hostname + path;
-    } catch (error) {
-      return rawUrl;
-    }
-  }
-
   function findSavedMatch(url) {
     if (!url) {
       return null;
@@ -606,7 +618,7 @@
   }
 
   if (typeof window !== "undefined") {
-    window.RemoteUxRealityTestPopupTestHooks = {
+    window.JobEvaluatorPopupTestHooks = {
       applyStarToggle,
       normalizeSavedJobs,
       sortSavedJobs

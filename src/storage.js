@@ -1,5 +1,5 @@
 (function (global) {
-  const constants = global.RemoteUxRealityTestConstants;
+  const constants = global.JobEvaluatorConstants;
 
   function getSavedJobs() {
     return new Promise((resolve, reject) => {
@@ -15,6 +15,44 @@
 
         resolve(items);
       });
+    });
+  }
+
+  function getUserPreferences() {
+    return new Promise((resolve, reject) => {
+      chrome.storage.local.get([constants.PREFERENCES_STORAGE_KEY], (result) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+          return;
+        }
+
+        const defaults = constants.DEFAULT_USER_PREFERENCES || {};
+        const stored = result[constants.PREFERENCES_STORAGE_KEY];
+        const merged = Object.assign({}, defaults, isObject(stored) ? stored : {});
+        merged.educationMatchKeywords = normalizeEducationKeywords(merged.educationMatchKeywords, defaults.educationMatchKeywords);
+        resolve(merged);
+      });
+    });
+  }
+
+  function setUserPreferences(preferences) {
+    const defaults = constants.DEFAULT_USER_PREFERENCES || {};
+    const merged = Object.assign({}, defaults, isObject(preferences) ? preferences : {});
+    merged.educationMatchKeywords = normalizeEducationKeywords(merged.educationMatchKeywords, defaults.educationMatchKeywords);
+
+    return new Promise((resolve, reject) => {
+      chrome.storage.local.set(
+        {
+          [constants.PREFERENCES_STORAGE_KEY]: merged
+        },
+        () => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+            return;
+          }
+          resolve(merged);
+        }
+      );
     });
   }
 
@@ -73,10 +111,24 @@
     return source.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase();
   }
 
-  global.RemoteUxRealityTestStorage = {
+  function isObject(value) {
+    return value && typeof value === "object" && !Array.isArray(value);
+  }
+
+  function normalizeEducationKeywords(value, fallback) {
+    const base = Array.isArray(value) ? value : Array.isArray(fallback) ? fallback : [];
+    const cleaned = base
+      .map((item) => String(item || "").trim())
+      .filter(Boolean);
+    return Array.from(new Set(cleaned));
+  }
+
+  global.JobEvaluatorStorage = {
     deleteSavedJob,
     getSavedJobs,
+    getUserPreferences,
     setSavedJobs,
+    setUserPreferences,
     saveJob
   };
 })(globalThis);

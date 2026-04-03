@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Job Evaluator",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Analyze the current job posting page for overall job quality signals using a local rule-based rubric.",
   "action": {
     "default_title": "Job Evaluator",
@@ -10,10 +10,12 @@
   "background": {
     "service_worker": "src/background.js"
   },
+  "options_page": "src/options.html",
   "permissions": [
     "activeTab",
     "scripting",
-    "storage"
+    "storage",
+    "tabs"
   ],
   "icons": {
     "16": "icons/icon16.png",

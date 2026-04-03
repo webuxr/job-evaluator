@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Job Evaluator Preferences</title>
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="header">
+      <p class="eyebrow">Job Evaluator</p>
+      <h1>Preferences</h1>
+      <p class="muted">Personal information is private and only stored in your browser. Private data is not shared nor publically available.</p>
+      <p class="header-link-wrap">
+        <a id="openExtensionSettings" class="header-link" href="#">Return to Extension Settings</a>
+      </p>
+    </header>
+
+    <section class="card">
+      <h2>Scoring Preferences</h2>
+      <label class="row">
+        <input id="penalizeHybridHeavily" type="checkbox" />
+        <span>Penalize hybrid heavily</span>
+      </label>
+      <label class="row">
+        <input id="preferAccessibilityRoles" type="checkbox" />
+        <span>Prefer accessibility roles</span>
+      </label>
+      <label class="row">
+        <input id="preferProductUXOverMarketingUX" type="checkbox" />
+        <span>Prefer product UX over marketing UX</span>
+      </label>
+      <label class="row">
+        <input id="preferRemoteRoles" type="checkbox" />
+        <span>Prefer remote roles</span>
+      </label>
+      <label class="row">
+        <input id="preferRemoteOnly" type="checkbox" />
+        <span>Prefer remote-only roles</span>
+      </label>
+      <label class="row">
+        <input id="enableCommutePlaceholderLogic" type="checkbox" />
+        <span>Enable commute placeholder logic</span>
+      </label>
+    </section>
+
+    <section class="card">
+      <h2>Commute</h2>
+      <div class="grid">
+        <label>
+          <span class="label">Home ZIP</span>
+          <input id="commuteZip" type="text" inputmode="numeric" maxlength="10" placeholder="e.g. 10001" />
+        </label>
+        <label>
+          <span class="label">Max Radius (miles)</span>
+          <input id="commuteRadiusMiles" type="number" min="0" max="500" step="1" />
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Optional Personal Fields</h2>
+      <div class="grid">
+        <label>
+          <span class="label">Contact Email</span>
+          <input id="contactEmail" type="email" placeholder="you@example.com" />
+        </label>
+        <label>
+          <span class="label">Target Salary Text</span>
+          <input id="targetSalaryText" type="text" placeholder="e.g. $140k+" />
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Education Match Keywords</h2>
+      <p class="muted">Comma or newline separated.</p>
+      <textarea id="educationMatchKeywords" rows="6"></textarea>
+    </section>
+
+    <footer class="actions">
+      <button id="resetButton" class="button" type="button">Reset Defaults</button>
+      <button id="saveButton" class="button button--primary" type="button">Save Preferences</button>
+      <span id="statusMessage" class="muted" role="status" aria-live="polite"></span>
+    </footer>
+  </main>
+
+  <script src="constants.js"></script>
+  <script src="storage.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 (function () {
-  const utils = window.RemoteUxRealityTestUtils;
+  const utils = window.JobEvaluatorUtils;
 
   const TEST_CASES = [
     {

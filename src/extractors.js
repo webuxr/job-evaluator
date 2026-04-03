@@ -1,5 +1,5 @@
 (function (global) {
-  const utils = global.RemoteUxRealityTestUtils;
+  const utils = global.JobEvaluatorUtils;
 
   function makeBaseResult() {
     return {
@@ -13,6 +13,7 @@
       applyUrl: "",
       applyText: "",
       fullJobText: "",
+      hasSimplifyJobsShadowRoot: false,
       reasoningSnippets: [],
       extractorUsed: "generic"
     };
@@ -48,6 +49,9 @@
       applyUrl: merged.applyUrl || fallbackApply.applyUrl || "",
       applyText: merged.applyText || fallbackApply.applyText || "",
       fullJobText: fullText || bodyText.fullText || "",
+      hasSimplifyJobsShadowRoot:
+        Boolean(merged.hasSimplifyJobsShadowRoot) ||
+        Boolean(document.querySelector("div.simplify-jobs-shadow-root")),
       reasoningSnippets: snippets,
       extractorUsed: extractorUsed || merged.extractorUsed || "generic"
     };
@@ -90,13 +94,14 @@
 
   function guessRoleTitle() {
     const selectorText = utils.textFromSelectors([
-      "h1",
+      "h1.section-header.section-header--large.font-primary",
       "[data-testid='jobsearch-JobInfoHeader-title']",
       ".job-details-jobs-unified-top-card__job-title",
       ".jobs-unified-top-card__job-title",
       ".job-card-list__title",
       ".artdeco-entity-lockup__title",
-      ".app-title"
+      ".app-title",
+      "h1"
     ]);
 
     if (selectorText) {
@@ -157,6 +162,7 @@
       utils.textFromSelectors([
         "[data-testid='job-location']",
         "#jobLocationText",
+        ".job__location",
         ".location",
         ".job-search-card__location",
         ".posting-categories .location"
@@ -379,6 +385,18 @@
 
   function extractGreenhouse() {
     const greenhouseTitleParts = parseGreenhouseTitle();
+    const structuredJob = parseStructuredJobPosting();
+    const greenhouseMetaSource = utils.textFromSelectors([
+      ".job__location",
+      ".opening .location",
+      ".location",
+      "#header .location",
+      ".application-header .location",
+      ".job-meta",
+      ".posting-categories",
+      "[data-testid='job-location']"
+    ]);
+    const greenhouseMeta = utils.splitLocationAndMeta(greenhouseMetaSource);
     const container =
       document.querySelector("#content") ||
       document.querySelector(".opening") ||
@@ -389,7 +407,25 @@
       container,
       {
         roleTitle:
+          sanitizeGreenhouseRoleTitle(
+            utils.textFromSelectors([
+              "h1.section-header.section-header--large.font-primary",
+              "h1.section-header.section-header--large",
+              "h1.font-primary",
+              ".opening h1",
+              ".application-header h1",
+              "[data-testid='job-title']",
+              "[class*='job-title']",
+              "[class*='jobTitle']",
+              "h1",
+              "h3.section-header",
+              ".app-title"
+            ])
+          ) ||
+          sanitizeGreenhouseRoleTitle(greenhouseTitleParts.roleTitle) ||
+          sanitizeGreenhouseRoleTitle(structuredJob.roleTitle) ||
           utils.textFromSelectors([
+            "h1.section-header.section-header--large.font-primary",
             "h3.section-header",
             ".app-title",
             ".opening h1",
@@ -398,7 +434,7 @@
             "[class*='job-title']",
             "[class*='jobTitle']",
             "h1"
-          ]) || greenhouseTitleParts.roleTitle,
+          ]),
         company:
           utils.textFromSelectors([
             "h4.section-title",
@@ -409,21 +445,43 @@
             "[data-testid='company-name']",
             "[class*='company-name']",
             "[class*='companyName']"
-          ]) || greenhouseTitleParts.company || utils.companyFromTitle(document.title),
+          ]) ||
+          greenhouseTitleParts.company ||
+          structuredJob.company ||
+          utils.companyFromTitle(document.title),
         locationText: utils.textFromSelectors([
+          ".job__location",
           ".location",
           ".opening .location",
           "#header .location",
           ".application-header .location",
           "[data-testid='job-location']"
-        ]),
-        salaryText: utils.salaryFromText(container ? container.innerText : document.body.innerText),
+        ]) || greenhouseMeta.locationText || structuredJob.locationText,
+        jobMetaText:
+          greenhouseMeta.jobMetaText ||
+          inferSimplifyJobMeta([
+            greenhouseMetaSource,
+            utils.textFromSelectors([
+              ".posting-categories",
+              ".job-meta",
+              "[data-testid='job-type']",
+              "[data-testid='employment-type']",
+              "[class*='employment']",
+              "[class*='seniority']",
+              "[class*='level']"
+            ])
+          ]) ||
+          structuredJob.jobMetaText,
+        salaryText:
+          utils.salaryFromText(container ? container.innerText : document.body.innerText) ||
+          structuredJob.salaryText,
         applyUrl: utils.firstHrefFromSelectors([
           "a[href*='grnh.se']",
           "a[href*='greenhouse']",
           "a[href*='application']"
         ]),
         applyText: utils.firstButtonLikeText([
+          "button",
           "a[href*='application']",
           "button[type='submit']",
           "a[href*='greenhouse']"
@@ -431,6 +489,186 @@
       },
       "greenhouse"
     );
+  }
+
+  function sanitizeGreenhouseRoleTitle(titleText) {
+    const cleaned = utils.cleanText(titleText || "");
+    if (!cleaned) {
+      return "";
+    }
+
+    if (/^come work with us\.?$/i.test(cleaned) || /^openings$/i.test(cleaned) || /^careers$/i.test(cleaned)) {
+      return "";
+    }
+
+    return cleaned;
+  }
+
+  function parseStructuredJobPosting() {
+    const scripts = Array.from(document.querySelectorAll("script[type='application/ld+json']"));
+    for (const script of scripts) {
+      const parsed = safeJsonParse(script.textContent || "");
+      const jobPosting = findJobPostingNode(parsed);
+      if (!jobPosting) {
+        continue;
+      }
+
+      const roleTitle = utils.cleanText(jobPosting.title || "");
+      const company = utils.cleanText(
+        (typeof jobPosting.hiringOrganization === "object" && jobPosting.hiringOrganization && jobPosting.hiringOrganization.name) ||
+          jobPosting.hiringOrganization ||
+          ""
+      );
+      const locationText = extractJobPostingLocation(jobPosting);
+      const salaryText = extractJobPostingSalary(jobPosting);
+      const jobMetaText = extractJobPostingMeta(jobPosting);
+
+      if (roleTitle || company || locationText || salaryText || jobMetaText) {
+        return {
+          roleTitle,
+          company,
+          locationText,
+          salaryText,
+          jobMetaText
+        };
+      }
+    }
+
+    return {
+      roleTitle: "",
+      company: "",
+      locationText: "",
+      salaryText: "",
+      jobMetaText: ""
+    };
+  }
+
+  function safeJsonParse(text) {
+    const raw = String(text || "").trim();
+    if (!raw) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(raw);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function findJobPostingNode(node) {
+    if (!node) {
+      return null;
+    }
+
+    if (Array.isArray(node)) {
+      for (const item of node) {
+        const found = findJobPostingNode(item);
+        if (found) {
+          return found;
+        }
+      }
+      return null;
+    }
+
+    if (typeof node !== "object") {
+      return null;
+    }
+
+    const typeValue = node["@type"];
+    const hasJobPostingType = Array.isArray(typeValue)
+      ? typeValue.some((value) => /jobposting/i.test(String(value || "")))
+      : /jobposting/i.test(String(typeValue || ""));
+    if (hasJobPostingType) {
+      return node;
+    }
+
+    if (node["@graph"]) {
+      return findJobPostingNode(node["@graph"]);
+    }
+
+    return null;
+  }
+
+  function extractJobPostingLocation(jobPosting) {
+    const locationType = utils.cleanText(jobPosting.jobLocationType || "");
+    if (/telecommute|remote/i.test(locationType)) {
+      return "Remote";
+    }
+
+    const locations = utils.toArray(jobPosting.jobLocation);
+    for (const location of locations) {
+      const address = location && location.address ? location.address : location;
+      if (!address || typeof address !== "object") {
+        continue;
+      }
+
+      const city = utils.cleanText(address.addressLocality || "");
+      const region = utils.cleanText(address.addressRegion || "");
+      const country = utils.cleanText(address.addressCountry || "");
+
+      const cityRegion = [city, region].filter(Boolean).join(", ");
+      if (cityRegion) {
+        return cityRegion;
+      }
+      if (country) {
+        return country;
+      }
+    }
+
+    const applicantRequirements = utils.toArray(jobPosting.applicantLocationRequirements);
+    for (const requirement of applicantRequirements) {
+      const name = utils.cleanText(
+        (requirement && requirement.name) ||
+          (requirement && requirement.address && requirement.address.addressLocality) ||
+          ""
+      );
+      if (name) {
+        return name;
+      }
+    }
+
+    return "";
+  }
+
+  function extractJobPostingSalary(jobPosting) {
+    const baseSalary = jobPosting.baseSalary;
+    if (!baseSalary || typeof baseSalary !== "object") {
+      return "";
+    }
+
+    const value = baseSalary.value && typeof baseSalary.value === "object" ? baseSalary.value : baseSalary;
+    const minValue = Number(value.minValue);
+    const maxValue = Number(value.maxValue);
+    const unitText = utils.cleanText(value.unitText || baseSalary.unitText || "");
+
+    if (Number.isFinite(minValue) && Number.isFinite(maxValue)) {
+      const unitSuffix = /year|hour|week|month/i.test(unitText) ? " " + unitText.toLowerCase() : "";
+      return "$" + minValue.toLocaleString() + " to $" + maxValue.toLocaleString() + unitSuffix;
+    }
+
+    if (Number.isFinite(minValue)) {
+      return "$" + minValue.toLocaleString();
+    }
+
+    return "";
+  }
+
+  function extractJobPostingMeta(jobPosting) {
+    const meta = [];
+    const employmentTypes = utils.toArray(jobPosting.employmentType).map((item) => utils.cleanText(item || ""));
+    employmentTypes.forEach((item) => {
+      if (item) {
+        meta.push(item.replace(/_/g, "-"));
+      }
+    });
+
+    const locationType = utils.cleanText(jobPosting.jobLocationType || "");
+    if (/telecommute|remote/i.test(locationType)) {
+      meta.push("Remote");
+    }
+
+    return utils.dedupeStrings(meta).join(" • ");
   }
 
   function parseGreenhouseTitle() {
@@ -482,47 +720,6 @@
       roleTitle: normalized,
       company: ""
     };
-  }
-
-  function extractLever() {
-    const container =
-      document.querySelector(".posting-page") ||
-      document.querySelector(".content-wrapper") ||
-      document.querySelector(".section-wrapper");
-
-    return buildFromContainer(
-      container,
-      {
-        roleTitle: utils.textFromSelectors([
-          ".posting-headline h2",
-          ".posting-headline h1",
-          "h1"
-        ]),
-        company:
-          utils.textFromSelectors([
-            ".main-header-logo img[alt]",
-            ".main-header-logo",
-            ".posting-categories .team"
-          ]) || utils.companyFromTitle(document.title),
-        locationText: utils.textFromSelectors([
-          ".posting-categories .sort-by-location",
-          ".posting-categories .location",
-          ".posting-categories"
-        ]),
-        salaryText: utils.salaryFromText(container ? container.innerText : document.body.innerText),
-        applyUrl: utils.firstHrefFromSelectors([
-          "a[href*='lever.co']",
-          "a[href*='application']",
-          ".postings-btn-wrapper a"
-        ]),
-        applyText: utils.firstButtonLikeText([
-          ".postings-btn-wrapper a",
-          "a[href*='application']",
-          "button"
-        ])
-      },
-      "lever"
-    );
   }
 
   function extractDice() {
@@ -636,15 +833,13 @@
         applyUrl: utils.firstHrefFromSelectors([
           "a[href*='apply']",
           "a[href*='greenhouse']",
-          "a[href*='lever.co']",
           "a[href*='workdayjobs']",
           "a[href*='boards.greenhouse']"
         ]),
         applyText: utils.firstButtonLikeText([
           "a[href*='apply']",
           "button",
-          "a[href*='greenhouse']",
-          "a[href*='lever.co']"
+          "a[href*='greenhouse']"
         ])
       },
       "simplify"
@@ -780,9 +975,6 @@
       if (platform === "greenhouse") {
         return extractGreenhouse();
       }
-      if (platform === "lever") {
-        return extractLever();
-      }
       if (platform === "dice") {
         return extractDice();
       }
@@ -800,7 +992,7 @@
     }
   }
 
-  global.RemoteUxRealityTestExtractors = {
+  global.JobEvaluatorExtractors = {
     extractJobPosting
   };
 })(globalThis);

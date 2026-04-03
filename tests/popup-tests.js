@@ -1,5 +1,5 @@
 (function () {
-  const popupHooks = window.RemoteUxRealityTestPopupTestHooks;
+  const popupHooks = window.JobEvaluatorPopupTestHooks;
 
   const TEST_CASES = [
     {
