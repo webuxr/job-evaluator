@@ -7,7 +7,7 @@ Job Evaluator is a local-only Chrome extension MVP that inspects any current job
 1. Open Chrome and go to `chrome://extensions`.
 2. Enable `Developer mode`.
 3. Click `Load unpacked`.
-4. Select the folder [job-evaluator](job-evaluator).
+4. Select the folder [job-evaluator](.).
 5. Open a supported job posting page and click the extension icon.
 
 ## How It Works
@@ -181,7 +181,7 @@ Negative signals include:
 
 ## Personal Tuning
 
-Personal preferences live in [constants.js](job-evaluator/src/constants.js) in the `USER_PREFERENCES` object:
+Personal preferences live in [constants.js](src/constants.js) in the `USER_PREFERENCES` object:
 
 ```js
 const USER_PREFERENCES = {
@@ -197,7 +197,7 @@ const USER_PREFERENCES = {
 ```
 
 When `enableCommutePlaceholderLogic` is enabled, hybrid roles can receive a small `work model fit` boost when the posting text appears commute-friendly for your configured home ZIP and radius (for example, `53925` within `50` miles).
-The keyword hints used for this matching live in [constants.js](job-evaluator/src/constants.js) under `COMMUTE_RADIUS_HINTS`.
+The keyword hints used for this matching live in [constants.js](src/constants.js) under `COMMUTE_RADIUS_HINTS`.
 
 ## Extractor Coverage
 
@@ -247,23 +247,23 @@ Unknown job pages fall back to a generic extractor that uses:
 
 ## How To Tweak The Scoring
 
-1. Open [scorer.js](job-evaluator/src/scorer.js).
+1. Open [scorer.js](src/scorer.js).
 2. Adjust phrase rules or flag heuristics.
-3. Open [constants.js](job-evaluator/src/constants.js) to change weights or preferences.
+3. Open [constants.js](src/constants.js) to change weights or preferences.
 4. Reload the unpacked extension in Chrome and test again.
 
 ## Testing
 
 ### Lightweight Scorer Tests
 
-A simple browser-based scorer regression runner is included at [tests/run-tests.html](job-evaluator/tests/run-tests.html).
+A simple browser-based scorer regression runner is included at [tests/run-tests.html](tests/run-tests.html).
 
 How to use it:
 
-1. Open [run-tests.html](job-evaluator/tests/run-tests.html) in Chrome.
+1. Open [run-tests.html](tests/run-tests.html) in Chrome.
 2. Click `Run Tests`.
 3. Review pass/fail output for each scoring scenario.
-4. Re-run after changing [scorer.js](job-evaluator/src/scorer.js) or [constants.js](job-evaluator/src/constants.js).
+4. Re-run after changing [scorer.js](src/scorer.js) or [constants.js](src/constants.js).
 
 What it covers:
 
@@ -276,7 +276,7 @@ This test runner is intentionally lightweight and framework-free. It does not te
 
 ### Popup Saved-Results Tests
 
-A browser-based popup logic runner is included at [tests/run-popup-tests.html](job-evaluator/tests/run-popup-tests.html).
+A browser-based popup logic runner is included at [tests/run-popup-tests.html](tests/run-popup-tests.html).
 
 What it covers:
 
@@ -287,7 +287,7 @@ What it covers:
 
 ### Utility Location Tests
 
-A utility-focused runner is included at [tests/run-utils-tests.html](job-evaluator/tests/run-utils-tests.html).
+A utility-focused runner is included at [tests/run-utils-tests.html](tests/run-utils-tests.html).
 
 What it covers:
 
@@ -324,14 +324,14 @@ For each page, verify:
 
 The included icon files are tiny placeholder PNGs so the extension loads cleanly as an unpacked project. Replace them with production icons later using the same filenames:
 
-- [icon16.png](job-evaluator/icons/icon16.png)
-- [icon32.png](job-evaluator/icons/icon32.png)
-- [icon48.png](job-evaluator/icons/icon48.png)
-- [icon128.png](job-evaluator/icons/icon128.png)
+- [icon16.png](icons/icon16.png)
+- [icon32.png](icons/icon32.png)
+- [icon48.png](icons/icon48.png)
+- [icon128.png](icons/icon128.png)
 
 ## TODO
 
-- [x] Created [authors.md](job-evaluator/authors.md) with:
+- [x] Created [authors.md](authors.md) with:
   - CC BY 4.0 license
   - copyright holder name: @webuxr
   - copyright year: 2026
@@ -343,10 +343,15 @@ The included icon files are tiny placeholder PNGs so the extension loads cleanly
 - [ ] [P3] Convert analysis section layout into a tabbed UI so results are easier to review.
 - [ ] [P4] Create a text-blob extractor that accepts a pasted/raw job posting text block and returns normalized extraction fields.
 
+## Unprioritized TODOs
+
+- [ ] Add "Post Age" functionality to analyze how long a job has been posted.
+- [ ] Treat education requirements like "Bachelor's degree in HCI, Human Cognition, Interaction Design, or Human Factors (with equivalent 10+ years UX experience)" as a 100% education match.
+
 ## Sample Test Data
 
-The text fixtures in [test-data](job-evaluator/test-data) are useful for scoring experiments:
+The text fixtures in [test-data](test-data) are useful for scoring experiments:
 
-- [linkedin-sample.txt](job-evaluator/test-data/linkedin-sample.txt)
-- [greenhouse-sample.txt](job-evaluator/test-data/greenhouse-sample.txt)
-- [misleading-remote-sample.txt](job-evaluator/test-data/misleading-remote-sample.txt)
+- [linkedin-sample.txt](test-data/linkedin-sample.txt)
+- [greenhouse-sample.txt](test-data/greenhouse-sample.txt)
+- [misleading-remote-sample.txt](test-data/misleading-remote-sample.txt)
