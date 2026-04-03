@@ -83,12 +83,8 @@
 
     document.getElementById("resultCard").classList.remove("hidden");
     document.getElementById("roleTitle").textContent = result.roleTitle || "Unknown role";
-    document.getElementById("companyLine").textContent = [
-      result.company || "Unknown company",
-      formatDisplayUrl(result.url || "")
-    ]
-      .filter(Boolean)
-      .join(" • ");
+    document.getElementById("companyLine").textContent = result.company || "Unknown company";
+    renderJobPostUrl(result.url || "");
     document.getElementById("overallScore").textContent = String(result.overallScore);
     renderOverallScoreTone(result.overallScore);
     document.getElementById("locationText").textContent = result.locationText || "—";
@@ -211,6 +207,28 @@
       item.textContent = chipText;
       container.appendChild(item);
     });
+  }
+
+  function renderJobPostUrl(rawUrl) {
+    const link = document.getElementById("jobPostUrlLink");
+    const empty = document.getElementById("jobPostUrlEmpty");
+    if (!link || !empty) {
+      return;
+    }
+
+    if (!rawUrl) {
+      link.classList.add("hidden");
+      link.removeAttribute("href");
+      link.textContent = "";
+      empty.classList.remove("hidden");
+      empty.textContent = "—";
+      return;
+    }
+
+    link.classList.remove("hidden");
+    link.href = rawUrl;
+    link.textContent = rawUrl;
+    empty.classList.add("hidden");
   }
 
   async function copySummary() {
@@ -423,29 +441,6 @@
       "Why",
       ...(result.explanation.length ? result.explanation.map((item) => "- " + item) : ["- No explanation available"])
     ].join("\n");
-  }
-
-  function formatDisplayUrl(rawUrl) {
-    if (!rawUrl) {
-      return "";
-    }
-
-    try {
-      const parsed = new URL(rawUrl);
-      const hostname = parsed.hostname.replace(/^www\./, "");
-      const path = parsed.pathname.replace(/\/+$/, "") || "/";
-
-      if (hostname.includes("linkedin.com")) {
-        const currentJobId = parsed.searchParams.get("currentJobId");
-        if (currentJobId) {
-          return "linkedin.com/jobs/...#" + currentJobId;
-        }
-      }
-
-      return hostname + path;
-    } catch (error) {
-      return rawUrl;
-    }
   }
 
   function findSavedMatch(url) {

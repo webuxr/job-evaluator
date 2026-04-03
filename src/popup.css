@@ -312,6 +312,13 @@ a:focus-visible {
   margin: 0 0 16px;
 }
 
+.meta-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
 .meta-grid p {
   line-height: 1.45;
 }
@@ -335,6 +342,21 @@ a:focus-visible {
 
 .meta-list li::marker {
   color: var(--muted);
+}
+
+.job-post-url {
+  display: inline-block;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--primary-dark);
+  text-decoration: underline;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.job-post-url:hover {
+  color: var(--primary);
 }
 
 .subscores {

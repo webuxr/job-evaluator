@@ -68,7 +68,9 @@ The popup is intentionally compact:
 
 - header with status dot and re-analyze control
 - current page analysis card with a color-coded overall score
-- verdict, location, salary, and optional job-meta list
+- verdict, location, salary, and a two-column details section
+- left detail column: optional `Job Meta` list
+- right detail column: `JOB POST URL` with full clickable job URL (opens in a new tab)
 - `Differences Found` shown only when a saved version of the same job has actually changed
 - weighted score breakdown
 - red flags, green flags, and short explanation
@@ -342,7 +344,7 @@ The included icon files are tiny placeholder PNGs so the extension loads cleanly
   - attribution/ownership notes for code and assets
 - [x] Pick improved green/yellow/orange/red colors for overall score indicators and labels (`#198754`, `#b02a37`, `#fd7e14`, `#ffc107`).
 - [x] Increase popup width for a more comfortable viewing experience.
-- [ ] [P1] Move job post URL to a new sub-section and make the full URL easier to see without taking up much screen real estate.
+- [x] [P1] Move job post URL to a new sub-section and make the full URL easier to see without taking up much screen real estate.
 - [ ] [P2] Refactor scorer.js so it correctly scores on-site and hybrid jobs that are located within a 25 mile radius the same as a fully remote job.
 - [ ] [P3] Convert analysis section layout into a tabbed UI so results are easier to review.
 - [ ] [P4] Create a text-blob extractor that accepts a pasted/raw job posting text block and returns normalized extraction fields.
